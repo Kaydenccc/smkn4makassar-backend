@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AbsenController extends Controller
 {
@@ -334,9 +335,18 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenBySiswa(int $id_siswa): AnonymousResourceCollection {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
-        ->orderBy('tanggal', 'desc')
-        ->where('id_siswa', $id_siswa)->paginate(10);  
+        ->select([
+            DB::raw('(select count(*) from absens where id_siswa = ' . $id_siswa . ' and absens.id = absens.id) as total_absen'),
+            'id_guru',
+            'id_kelas',
+            'id_mapel',
+            'tanggal',
+          ])
+          ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
+          ->orderBy('tanggal', 'desc')
+          ->where('id_siswa', $id_siswa)
+          ->paginate(10);  // Ubah ke count() jika hanya butuh jumlah total
+      
         return AbsenResponse::collection($absens);
     }
     public function getAll(): AnonymousResourceCollection {
