@@ -313,10 +313,11 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenByMapelByKelasBySiswa(int $id_siswa): JsonResponse {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp','siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-            ->selectRaw('id_siswa, id_kelas, id_mapel, tanggal, count(*) as total_absen')
-            ->groupBy("id_siswa",'id_kelas', 'id_mapel')
-            ->orderBy('tanggal', 'desc')
-            ->where('id_siswa', $id_siswa)->get();
+        ->selectRaw('id_siswa, id_kelas, id_mapel, COUNT(*) as total_absen')
+        ->groupBy("id_siswa",'id_kelas', 'id_mapel')
+        ->orderBy('id_siswa', 'asc')
+        ->where('id_siswa', $id_siswa)
+        ->get();
         
         return response()->json([
             "data"=>$absens->toArray()
