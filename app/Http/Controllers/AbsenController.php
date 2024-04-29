@@ -314,10 +314,9 @@ Dinyatakan *".$status."*.";
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp','siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
             ->selectRaw('id_siswa, id_kelas, id_mapel, tanggal, count(*) as total_absen')
-            ->groupBy("id_siswa",'id_kelas', 'id_mapel')
+            ->groupBy("id_siswa",'id_kelas', 'id_mapel', 'tanggal')
             ->orderBy('tanggal', 'desc')
             ->where('id_siswa', $id_siswa)->get();
-    
         return response()->json([
             "data"=>$absens->toArray()
         ])->setStatusCode(200);
