@@ -313,7 +313,7 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenByMapelByKelasBySiswa(int $id_siswa): JsonResponse {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp','siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-            ->selectRaw('id_siswa, id_kelas, id_mapel, MIN(tanggal) as first_date, MAX(tanggal) as last_date, count(*) as total_absen')
+            ->selectRaw('id_siswa, id_kelas, id_mapel, tanggal, count(*) as total_absen')
             ->groupBy("id_siswa",'id_kelas', 'id_mapel')
             ->orderBy('tanggal', 'desc')
             ->where('id_siswa', $id_siswa)->get();
