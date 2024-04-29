@@ -273,13 +273,6 @@ Dinyatakan *".$status."*.";
         ->delete();
 
         $Newabsens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->select([
-            DB::raw('(select count(*) from absens where id_guru = ' . $id_guru . ' and absens.id = absens.id) as total_absen'),
-            'id_guru',
-            'id_kelas',
-            'id_mapel',
-            'tanggal',
-        ])
         ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
         ->orderBy('tanggal', 'desc')
         ->where('id_guru', $id_guru)->paginate(10);  
@@ -290,11 +283,12 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenByGuru(int $id_guru): AnonymousResourceCollection {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-            ->selectRaw('count(*) as total_absen, GROUP_CONCAT(id) as absen_ids')  // Gunakan fungsi agregat
-            ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
+            ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal',)
             ->orderBy('tanggal', 'desc')
             ->where('id_guru', $id_guru)
             ->paginate(10);
+
+            // dd($absens);
     
         return AbsenResponse::collection($absens);
     }
@@ -303,7 +297,6 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenByMapelByKelasByGuru(int $id_guru): AnonymousResourceCollection {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->selectRaw('id_guru, id_kelas, id_mapel, tanggal, count(*) as total_absen')
         ->groupBy("id_guru",'id_kelas', 'id_mapel')
         ->orderBy('tanggal', 'desc')
         ->where('id_guru', $id_guru)->paginate(15);  
@@ -313,7 +306,6 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenByMapelByKelasBySiswa(int $id_siswa): JsonResponse {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp','siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->selectRaw('id_siswa, id_kelas, id_mapel, COUNT(*) as total_absen')
         ->groupBy("id_siswa",'id_kelas', 'id_mapel')
         ->orderBy('id_siswa', 'asc')
         ->where('id_siswa', $id_siswa)
@@ -351,13 +343,6 @@ Dinyatakan *".$status."*.";
     public function getAllAbsenBySiswa(int $id_siswa): AnonymousResourceCollection {
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->select([
-            DB::raw('(select count(*) from absens where id_siswa = ' . $id_siswa . ' and absens.id = absens.id) as total_absen'),
-            'id_guru',
-            'id_kelas',
-            'id_mapel',
-            'tanggal',
-          ])
           ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
           ->orderBy('tanggal', 'desc')
           ->where('id_siswa', $id_siswa)
@@ -367,7 +352,6 @@ Dinyatakan *".$status."*.";
     }
     public function getAll(): AnonymousResourceCollection {
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->selectRaw('id_guru, id_kelas, id_mapel, tanggal, count(*) as total_absen')
         ->orderBy('tanggal', 'desc')
         ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
         ->get();  
@@ -498,7 +482,6 @@ Dinyatakan *".$status."*.";
         ->delete();
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->selectRaw('id_guru, id_kelas, id_mapel, tanggal, count(*) as total_absen')
         ->groupBy("id_guru",'id_kelas', 'id_mapel')
         ->orderBy('tanggal', 'desc')
         ->where('id_guru', $id_guru)->paginate(15);  
@@ -513,7 +496,6 @@ Dinyatakan *".$status."*.";
         $size = $request->input("size", 10);
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
-        ->selectRaw('id_guru, id_kelas, id_mapel, tanggal, count(*) as total_absen')
         ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
         ->orderBy('tanggal', 'desc')
         ->where('id_guru', $user->id);  
