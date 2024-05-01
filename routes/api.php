@@ -72,7 +72,8 @@ Route::middleware(AuthAdminMiddleware::class)->group(function(){
     Route::delete('/siswa/{id}', [SiswaController::class, 'delete'])->where('id', '[0-9]+');
     Route::get('/siswa/{kelas_id}/all', [SiswaController::class, 'getAllSiswaByClass'])->where('kelas_id', '[0-9]+');
     
-    Route::get('/search/siswa', [SiswaController::class, 'search']);
+    Route::get('/search/siswa/admin', [SiswaController::class, 'search']);
+    Route::get('/search/siswa/perkelas', [SiswaController::class, 'searchSiswaPerkelas']);
 });
 
 
@@ -95,7 +96,8 @@ Route::middleware(ApiAuthMiddleware::class)->group(function(){
 
      
     Route::get('/search/absen', [AbsenController::class, 'search']);
-    Route::get('/search/siswa', [SiswaController::class, 'search']);
+    Route::get('/search/absen/rekap', [AbsenController::class, 'searchRekap']);
+    Route::get('/search/siswa', [AbsenController::class, 'searchSiswa']);
     Route::get('/guru/absens/siswa/{id_siswa}/{id_mapel}/{id_kelas}/statistik', [AbsenController::class, 'getStatistik'])->where('id_siswa', '[0-9]+');
 
 });
@@ -104,6 +106,8 @@ Route::middleware(AuthSiswaMiddleware::class)->group(function(){
     Route::get('/siswa/current', [SiswaController::class, 'getLoginSiswa']);
     Route::delete('/siswa/logout', [SiswaController::class, 'logout']);
     Route::get('/absens/siswa/{id_siswa}', [AbsenController::class, 'getAllAbsenBySiswa'])->where('id_siswa', '[0-9]+');
+    Route::get('/search/absens/siswa', [AbsenController::class, 'searchAbsenBySiswa']);
+    Route::get('/search/mapel/siswa', [AbsenController::class, 'searchMapelBySiswa']);
     Route::get('/absens/siswa/{id_siswa}/laporan', [AbsenController::class, 'getAllAbsenByMapelByKelasBySiswa'])->where('id_siswa', '[0-9]+');
     Route::get('/absens/siswa/{id_siswa}/{id_mapel}/{id_kelas}/statistik', [AbsenController::class, 'getStatistik'])->where('id_siswa', '[0-9]+');
     Route::get('/kelas/siswa/{id}/bysiswa', [SiswaController::class, 'getKelasSiswa'])->where('id', '[0-9]+');

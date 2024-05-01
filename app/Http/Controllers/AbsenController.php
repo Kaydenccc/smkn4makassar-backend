@@ -19,7 +19,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class AbsenController extends Controller
 {
@@ -130,16 +129,13 @@ Dinyatakan *hadir* dalam kelas.";
 
         // // Dapatkan waktu saat ini dengan zona waktu yang diinginkan
         // $currentTime = new DateTime('now', $desiredTimeZone);
-        // error_log($dataBaru);
         // // Mendapatkan jam dan menit
         // $time = $currentTime->format('H:i'); 
-        error_log(serialize($dataBaru));
         //mendapatkan data absen
         $absen = Absen::with('guru:id,nama,nip', 'siswa:id,nama,nis,jenis_kelamin,kontak_orang_tua', 'kelas:id,kelas', 'mapel:id,mapel')
         ->where("id_siswa",$id)
         ->where('id_kelas', $id_kelas)->where('id_guru', $id_guru)->where('id_mapel', $id_mapel)->where('tanggal',$tgl)->first();
-        // dd($dataBaru);
-        // dd($absen);
+
 
         if(!$absen){
             throw new HttpResponseException(response([
@@ -181,7 +177,7 @@ Dinyatakan *".$dataBaru["status"]."* dalam kelas.";
     {
         // validasi data
         $request->validate([
-                "absens" => ['required']
+                "siswa" => ['required']
         ]);
 
 
@@ -503,9 +499,11 @@ Dinyatakan *".$status."*.";
         $absens = $absens->where(function (Builder $builder) use ($request) {
             $cari = $request->input('cari');
             if($cari){
-                // dd($builder);
                 $builder->whereHas('mapel', function ($query) use ($cari) {
                     $query->where('mapel', 'like', '%' . $cari . '%');
+                });
+                $builder->orWhereHas('kelas', function ($query) use ($cari) {
+                    $query->where('kelas', 'like', '%' . $cari . '%');
                 });
                 $builder->orWhere('tanggal','like', "%".$cari."%");
             }
@@ -516,5 +514,120 @@ Dinyatakan *".$status."*.";
         return AbsenResponse::collection($absens);
     }
 
+    public function searchRekap(Request $request): AnonymousResourceCollection {
 
+        $user = Auth::user();
+
+        $page = $request->input("page", 1);
+        $size = $request->input("size", 15);
+  
+        $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'kelas:id,kelas', 'mapel:id,mapel')
+        ->groupBy("id_guru",'id_kelas', 'id_mapel')
+        ->orderBy('tanggal', 'desc')
+        ->where('id_guru', $user->id);  
+
+        $absens = $absens->where(function (Builder $builder) use ($request) {
+            $cari = $request->input('cari');
+            if($cari){
+                $builder->whereHas('mapel', function ($query) use ($cari) {
+                    $query->where('mapel', 'like', '%' . $cari . '%');
+                });
+                $builder->orWhereHas('kelas', function ($query) use ($cari) {
+                    $query->where('kelas', 'like', '%' . $cari . '%');
+                });
+            }
+        });
+
+        $absens = $absens->paginate(perPage:$size,page:$page);
+
+        return AbsenResponse::collection($absens);
+    }
+
+    public function searchSiswa(Request $request): AnonymousResourceCollection {
+        $id_kelas = $request->input("kelas");
+        $id_guru = $request->input("guru");
+        $id_mapel = $request->input("mapel");
+        $tgl = $request->input("tgl");
+
+        $siswa = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
+        ->orderBy('tanggal', 'desc')
+        ->where('id_kelas', $id_kelas)->where('id_guru', $id_guru)->where('id_mapel', $id_mapel)->where('tanggal',$tgl);
+
+        // dd($siswa, $id_guru, $id_kelas, $id_mapel, $tgl);
+        $siswa = $siswa->where(function (Builder $builder) use ($request) {
+            $cari = $request->input('cari');
+            if($cari){
+                $builder->whereHas('siswa', function ($query) use ($cari) {
+                    $query->where('nama', 'like', '%' . $cari . '%')->orWhere('nis','like', "%" .$cari. "%");
+                });
+            }
+        });
+
+        $siswa = $siswa->get();
+
+        return AbsenResponse::collection($siswa);
+    }
+
+    public function searchAbsenBySiswa(Request $request): AnonymousResourceCollection {
+      
+          $user = Auth::user();
+
+          $page = $request->input("page", 1);
+          $size = $request->input("size", 15);
+    
+          $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
+          ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal')
+          ->orderBy('tanggal', 'desc')
+          ->where('id_siswa', $user->id);
+  
+          $absens = $absens->where(function (Builder $builder) use ($request) {
+              $cari = $request->input('cari');
+              if($cari){
+                  $builder->whereHas('mapel', function ($query) use ($cari) {
+                      $query->where('mapel', 'like', '%' . $cari . '%');
+                  });
+                  $builder->orWhereHas('kelas', function ($query) use ($cari) {
+                      $query->where('kelas', 'like', '%' . $cari . '%');
+                  });
+                  $builder->orWhereHas('guru', function ($query) use ($cari) {
+                      $query->where('nama', 'like', '%' . $cari . '%');
+                  });
+                  $builder->orWhere('tanggal','like', "%".$cari."%");
+              }
+          });
+  
+          $absens = $absens->paginate(perPage:$size,page:$page);
+  
+          return AbsenResponse::collection($absens);
+    }
+    public function searchMapelBySiswa(Request $request): JsonResponse {
+      
+          $user = Auth::user();
+    
+         $absens = Absen::with('guru:id,nama,nip,email,no_hp','siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
+            ->groupBy("id_siswa",'id_kelas', 'id_mapel')
+            ->orderBy('id_siswa', 'asc')
+            ->where('id_siswa', $user->id);
+    
+          $absens = $absens->where(function (Builder $builder) use ($request) {
+              $cari = $request->input('cari');
+              if($cari){
+                  $builder->whereHas('mapel', function ($query) use ($cari) {
+                      $query->where('mapel', 'like', '%' . $cari . '%');
+                  });
+                  $builder->orWhereHas('kelas', function ($query) use ($cari) {
+                      $query->where('kelas', 'like', '%' . $cari . '%');
+                  });
+                  $builder->orWhereHas('guru', function ($query) use ($cari) {
+                      $query->where('nama', 'like', '%' . $cari . '%');
+                  });
+              }
+          });
+  
+          $absens = $absens->get();
+  
+          return response()->json([
+            "data"=>$absens->toArray()
+        ])->setStatusCode(200);
+    }
 }

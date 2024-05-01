@@ -8,11 +8,11 @@ use App\Http\Requests\SiswaUpdateRequest;
 use App\Http\Resources\SiswaResponse;
 use App\Models\Kelas;
 use App\Models\Siswa;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -133,7 +133,7 @@ class SiswaController extends Controller
     }
 
     public function getAllSiswaByClass(Request $request, int $kelas_id): AnonymousResourceCollection  {
-        $kelass = Siswa::with("kelas:id,kelas")->where('id_kelas', $kelas_id)->get();
+        $kelass = Siswa::with("kelas:id,kelas")->orderBy('nama')->where('id_kelas', $kelas_id)->get();
 
         if($kelass->count() <= 0) {
             throw new HttpResponseException(response([
@@ -146,6 +146,8 @@ class SiswaController extends Controller
         }
         return SiswaResponse::collection($kelass);
     }
+
+
     public function getAllSiswa(): AnonymousResourceCollection  {
         $siswa = Siswa::with("kelas:id,kelas")->orderBy('created_at', 'desc')->paginate(10);
         return SiswaResponse::collection($siswa);
@@ -200,17 +202,26 @@ class SiswaController extends Controller
         
     }
 
+
+
+    
+
     public function search(Request $request): AnonymousResourceCollection {
+
         $page = $request->input("page", 1);
         $size = $request->input("size", 10);
 
-        $siswa = Siswa::query();
+        $siswa = Siswa::with("kelas:id,kelas")->orderBy('created_at', 'desc');
 
         $siswa = $siswa->where(function (Builder $builder) use ($request) {
             $cari = $request->input('cari');
             if($cari){
-                $builder->orWhere('nama','like', "%".$cari."%");
-                $builder->orWhere('nis','like', "%".$cari."%");
+                    $builder->orWhere('nama','like', "%".$cari."%");
+                    $builder->orWhereHas('kelas', function ($query) use ($cari) {
+                        $query->where('kelas', 'like', '%' . $cari . '%');
+                    });
+                    $builder->orWhere('nis','like', "%".$cari."%");
+                    $builder->orWhere('kontak','like', "%".$cari."%");
             }
         });
 
@@ -219,35 +230,20 @@ class SiswaController extends Controller
         return SiswaResponse::collection($siswa);
     }
 
-    
+    public function searchSiswaPerkelas(Request $request): AnonymousResourceCollection  {
+        $kelas = $request->input('kelas');
+        $siswa = Siswa::with("kelas:id,kelas")->orderBy('nama')->where('id_kelas', $kelas);
 
-    // public function search(Request $request): AnonymousResourceCollection {
-    //     $user = Auth::user();
+        $siswa = $siswa->where(function (Builder $builder) use ($request) {
+            $cari = $request->input('cari');
+            if($cari){
+                    $builder->orWhere('nama','like', "%".$cari."%");
+                    $builder->orWhere('nis','like', "%".$cari."%");
+                    $builder->orWhere('kontak','like', "%".$cari."%");
+            }
+        });
 
-    //     $page = $request->input("page", 1);
-    //     $size = $request->input("size", 10);
-
-    //     $siswa = Siswa::query()->where('id', $user->id);
-
-    //     $siswa = $siswa->where(function (Builder $builder) use ($request) {
-    //         $nama = $request->input('nama');
-    //         if($nama){
-    //                 $builder->orWhere('nama','like', "%".$nama."%");
-    //         }
-
-    //         $nis = $request->input('nis');
-    //         if($nis){
-    //                 $builder->where('nis','like', "%".$nis."%");
-    //         }
-
-    //         $kontak = $request->input('kontak');
-    //         if($kontak){
-    //                 $builder->where('kontak','like', "%".$kontak."%");
-    //         }
-    //     });
-
-    //     $siswa = $siswa->paginate(perPage:$size,page:$page);
-
-    //     return SiswaResponse::collection($siswa);
-    // }
+        $siswa = $siswa->get();
+        return SiswaResponse::collection($siswa);
+    }
 }
