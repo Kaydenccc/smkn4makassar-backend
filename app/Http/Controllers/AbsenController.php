@@ -59,6 +59,38 @@ class AbsenController extends Controller
             ]
         ])->setStatusCode(201);
     }
+    public function editAbsen(AbsenRequest $request, string $tanggal) : JsonResponse
+    {
+        
+        $data = $request->validated();
+        $data["tanggal"] = Carbon::parse($data["tanggal"])->format('Y-m-d');
+        $absens = Absen::where('id_kelas', $data["id_kelas"])->where('id_mapel', $data["id_mapel"])->where('tanggal', $tanggal)->where('id_guru', $data['id_guru'])->get();
+
+        if($absens->count() == 0) {
+            throw new HttpResponseException(response([
+                "errors"=>[
+                    "message" =>[
+                        "Not found."
+                    ]
+                ]
+                    ],404));
+        }
+
+        foreach($absens as $item) {
+                $item["id_mapel"] = $data['id_mapel'];
+                $item["id_kelas"] = $data['id_kelas'];
+                $item["id_guru"] = $data['id_guru'];
+                $item["tanggal"] = $data['tanggal'];
+                $item["materi"] = $data['materi'];
+                $item->save();
+        }
+
+        return response()->json([
+            "data"=>[
+                "Absen updated successfully."
+            ]
+        ])->setStatusCode(201);
+    }
 
     public function setAbsen(int $id, int $id_mapel,int $id_guru, int $id_kelas, string $tgl): JsonResponse
     {
@@ -355,6 +387,17 @@ Dinyatakan *".$status."*.";
     }
 
     public function getAllKelasAndMapel(): JsonResponse {
+        $kelas = Kelas::select('id', 'kelas')->get();
+        $mapels = Mapel::select('id', 'mapel')->get();
+
+        return response()->json([
+            "data"=> [
+                "kelas"=> $kelas,
+                "mapel"=> $mapels
+            ]
+            ]);
+    }
+    public function getDataAbsenUpdate(): JsonResponse {
         $kelas = Kelas::select('id', 'kelas')->get();
         $mapels = Mapel::select('id', 'mapel')->get();
 

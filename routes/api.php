@@ -82,6 +82,7 @@ Route::middleware(ApiAuthMiddleware::class)->group(function(){
     Route::get('/gurus/current', [GuruController::class, 'get']);
     Route::delete('/gurus/logout', [GuruController::class, 'logout']);
     Route::post('/absens', [AbsenController::class, 'create']);
+    Route::patch('/absens/edit/{tanggal}', [AbsenController::class, 'editAbsen']);
     Route::get('/absens/{id}/{id_mapel}/{id_guru}/{id_kelas}/{tgl}', [AbsenController::class, 'setAbsen'])->where('id', '[0-9]+')->where('id_mapel', '[0-9]+')->where('id_guru', '[0-9]+')->where('id_kelas', '[0-9]+');
     Route::patch('/absens/{id}/{id_mapel}/{id_guru}/{id_kelas}/{tgl}', [AbsenController::class, 'setAbsenUpdate'])->where('id', '[0-9]+')->where('id_mapel', '[0-9]+')->where('id_guru', '[0-9]+')->where('id_kelas', '[0-9]+');
     Route::put('/absen/array', [AbsenController::class, 'setAbsenArray']);
