@@ -209,11 +209,11 @@ Dinyatakan *".$dataBaru["status"]."* dalam kelas.";
     {
         // validasi data
         $request->validate([
-                "siswa" => ['required']
+                "absens" => ['required']
         ]);
 
 
-        $data = $request->input('absens');
+        $data = $request->absens;
         if(count($data) == 0) {
             throw new HttpResponseException(response([
                         "errors"=>[
