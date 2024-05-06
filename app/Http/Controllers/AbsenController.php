@@ -312,7 +312,7 @@ Dinyatakan *".$status."*.";
 
         $absens = Absen::with('guru:id,nama,nip,email,no_hp', 'siswa:id,nama,nis,jenis_kelamin', 'kelas:id,kelas', 'mapel:id,mapel')
             ->groupBy("id_guru",'id_kelas', 'id_mapel', 'tanggal',)
-            ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc')
             ->where('id_guru', $id_guru)
             ->paginate(10);
 
