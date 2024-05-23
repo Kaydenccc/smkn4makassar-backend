@@ -30,15 +30,35 @@ class AbsenController extends Controller
         $siswas = Siswa::where('id_kelas', $data["id_kelas"])->get();
         $data["tanggal"] = Carbon::parse($data["tanggal"])->format('Y-m-d');
 
+
         if($siswas->count() == 0) {
             throw new HttpResponseException(response([
                 "errors"=>[
                     "message" =>[
-                        "Not found."
+                        "Tidak ada data siswa."
                     ]
                 ]
                     ],404));
         }
+
+
+            // Check if any absensi already exists for the given criteria
+    $absensiExist = Absen::where('id_guru', $data['id_guru'])
+    ->where('id_kelas', $data['id_kelas'])
+    ->where('id_mapel', $data['id_mapel'])
+    ->where('tanggal', $data['tanggal'])
+    ->exists();
+
+        if ($absensiExist) {
+            return response()->json([
+                "errors" => [
+                    "message" => [
+                        "Absen sudah dibuat."
+                    ]
+                ]
+            ])->setStatusCode(400);
+        }
+
 
         foreach($siswas as $item) {
             $siswaExist = Absen::where('id_siswa', $item['id'])
@@ -138,8 +158,8 @@ Tanggal : *".$absen->tanggal."*
 Jam : *".$time."*\n
 Dinyatakan *hadir* dalam kelas.";  
 
-        $data['phone'] = '082359036670';
-        // $data['phone'] = $absen->siswa->kontak_orang_tua;
+        // $data['phone'] = '082359036670';
+        $data['phone'] = $absen->siswa->kontak_orang_tua;
         $data['message'] = $pesan;
         $data['secret'] = false;
         $data['retry'] = false;
@@ -189,8 +209,8 @@ Tanggal : *".$absen->tanggal."*
 Jam : *".$dataBaru["jam"]."*\n
 Dinyatakan *".$dataBaru["status"]."* dalam kelas.";  
 
-        $data['phone'] = '082359036670';
-        // $data['phone'] = $absen->siswa->kontak_orang_tua;
+        // $data['phone'] = '082359036670';
+        $data['phone'] = $absen->siswa->kontak_orang_tua;
         $data['message'] = $pesan;
         $data['secret'] = false;
         $data['retry'] = false;
